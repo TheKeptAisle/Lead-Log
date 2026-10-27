@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fair Day Lead Log</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Karla:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: single column — sticky tally bar, quick-entry card, filter row, stacked lead cards. */
+:root{
+  --ivory:#faf6f1;
+  --paper:#ffffff;
+  --olive:#4d5b44;
+  --olive-soft:#eceee7;
+  --band:#4d5b44;
+  --band-fg:#faf6f1;
+  --band-dim:#e3dccd;
+  --gold:#b99a65;
+  --ink:#2b2a27;
+  --ink-soft:#6f6b62;
+  --line:#e2ddd3;
+  --booked:#3f6b4a;
+  --booked-bg:#e6efe6;
+  --deciding:#9a6f2c;
+  --deciding-bg:#f6eedd;
+  --browsing:#6f6b62;
+  --browsing-bg:#eeeae3;
+  --display:"Marcellus",Georgia,"Times New Roman",serif;
+  --body:"Karla","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ivory:#1b1a18;
+    --paper:#232220;
+    --olive:#a8bb9b;
+    --olive-soft:#2c312a;
+    --band:#2f372b;
+    --band-fg:#eef1e9;
+    --band-dim:#b9c2b0;
+    --gold:#d2b784;
+    --ink:#f1ece4;
+    --ink-soft:#a9a296;
+    --line:#38352f;
+    --booked:#9fd0a8;
+    --booked-bg:#25332a;
+    --deciding:#e0b86c;
+    --deciding-bg:#352c1d;
+    --browsing:#a9a296;
+    --browsing-bg:#2c2a26;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ivory:#1b1a18;
+  --paper:#232220;
+  --olive:#a8bb9b;
+  --olive-soft:#2c312a;
+  --band:#2f372b;
+  --band-fg:#eef1e9;
+  --band-dim:#b9c2b0;
+  --gold:#d2b784;
+  --ink:#f1ece4;
+  --ink-soft:#a9a296;
+  --line:#38352f;
+  --booked:#9fd0a8;
+  --booked-bg:#25332a;
+  --deciding:#e0b86c;
+  --deciding-bg:#352c1d;
+  --browsing:#a9a296;
+  --browsing-bg:#2c2a26;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--ivory);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+
+/* header */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--band);color:var(--band-fg)}
+.topbar .inner{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline}
+.topbar h1{font-size:19px;letter-spacing:.02em;color:var(--band-fg);flex:1 1 auto;min-width:0}
+.tallies{display:flex;gap:16px;font-variant-numeric:tabular-nums}
+.tally{display:flex;flex-direction:column;line-height:1.15}
+.tally b{font-size:19px;font-weight:600}
+.tally span{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;opacity:.75}
+.tabs{display:flex;border:1px solid rgba(255,255,255,.35);border-radius:999px;overflow:hidden}
+.tab{background:transparent;border:0;border-radius:0;color:var(--band-fg);opacity:.72;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;padding:7px 16px}
+.tab[aria-pressed="true"]{background:var(--band-fg);color:var(--band);opacity:1}
+.deadline{width:100%;font-size:12px;letter-spacing:.04em;color:var(--band-dim)}
+.deadline b{color:var(--band-fg);font-weight:600}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:16px}
+.entry{margin-top:20px}
+.entry h2{font-size:17px;margin-bottom:2px}
+.entry .hint{color:var(--ink-soft);font-size:12.5px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+label.f span{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft)}
+input,select,textarea{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--ivory);border:1px solid var(--line);border-radius:3px;padding:9px 10px;min-width:0;width:100%}
+textarea{resize:vertical;min-height:62px;line-height:1.45}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.wide{grid-column:1/-1}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+button{font-family:var(--body);font-size:14px;cursor:pointer;border-radius:3px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:9px 14px}
+button.primary{background:var(--olive);border-color:var(--olive);color:var(--paper);font-weight:600;letter-spacing:.02em}
+button.ghost{background:transparent}
+button.link{border:0;background:none;padding:4px 2px;color:var(--ink-soft);text-decoration:underline;font-size:12.5px}
+.saved{font-size:13px;color:var(--olive);font-weight:600}
+
+/* section headings */
+.sub{display:flex;align-items:baseline;gap:10px;margin:16px 0 10px}
+.sub h3{font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--olive);white-space:nowrap}
+.sub .rule{flex:1 1 auto;height:1px;background:var(--line)}
+.sub em{font-style:normal;font-size:12px;color:var(--ink-soft);white-space:nowrap}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.lead .mine{margin-top:14px;padding-top:4px;border-top:1px dashed var(--line)}
+.lead .mine .sub{margin-top:10px}
+
+/* filters */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:26px 0 12px}
+.bar .spacer{flex:1 1 auto}
+.chip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft)}
+.chip[aria-pressed="true"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive);font-weight:600}
+
+/* lead cards */
+.leads{display:flex;flex-direction:column;gap:12px}
+.lead{background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--browsing);border-radius:4px;padding:14px 16px}
+.lead.s-booked{border-left-color:var(--booked)}
+.lead.s-deciding{border-left-color:var(--deciding)}
+.lead .head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.lead h3{font-size:17px;flex:1 1 auto;min-width:0}
+.pill{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--browsing-bg);color:var(--browsing)}
+.pill.booked{background:var(--booked-bg);color:var(--booked)}
+.pill.deciding{background:var(--deciding-bg);color:var(--deciding)}
+.pill.src{background:transparent;border:1px solid var(--line);color:var(--ink-soft);font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;margin:9px 0 0;font-size:13.5px;color:var(--ink-soft)}
+.meta b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.contact{font-size:14px;margin-top:6px;word-break:break-word}
+.note{margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.row label.f{flex:0 1 190px}
+.row .link{margin-left:auto;align-self:flex-end}
+.seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:7px 11px;font-size:12.5px;color:var(--ink-soft);background:transparent}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--olive);color:var(--paper);font-weight:600}
+.tick{display:inline-flex;gap:7px;align-items:center;font-size:13px;border:1px solid var(--line);border-radius:3px;padding:7px 11px;background:transparent;color:var(--ink-soft)}
+.tick[aria-pressed="true"]{border-color:var(--olive);color:var(--olive);background:var(--olive-soft);font-weight:600}
+.tick::before{content:"○";font-size:13px}
+.tick[aria-pressed="true"]::before{content:"●"}
+
+/* couple view */
+#kiosk{min-height:100%;background:var(--ivory)}
+.kwrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:34px 40px}
+.keyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+.khead h2{font-size:30px;line-height:1.15;margin-bottom:8px}
+.khint{color:var(--ink-soft);font-size:14.5px;margin:0 0 22px;max-width:46ch}
+#kiosk .card{padding:20px}
+#kiosk label.f span{font-size:11.5px;letter-spacing:.07em}
+#kiosk input,#kiosk select{font-size:16px;padding:12px 12px}
+#kiosk .grid{gap:14px}
+.kbig{width:100%;margin-top:18px;padding:15px 18px;font-size:16px}
+.kexit{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 14px;opacity:.65}
+.kexit[data-holding="1"]{opacity:1;border-color:var(--gold);color:var(--gold)}
+.kthanks{text-align:center;padding:48px 10px}
+.kthanks h2{font-size:28px;margin-bottom:10px}
+.kthanks p{color:var(--ink-soft);max-width:38ch;margin:0 auto}
+
+/* empty + footer */
+.empty{border:1px dashed var(--line);border-radius:4px;padding:28px 20px;text-align:center;color:var(--ink-soft)}
+.empty h3{font-size:18px;color:var(--ink);margin-bottom:6px}
+.empty p{margin:0 auto;max-width:44ch;font-size:13.5px}
+.foot{margin-top:28px;font-size:12.5px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.warn{background:var(--deciding-bg);color:var(--deciding);border-radius:3px;padding:8px 12px;font-size:13px;margin-top:14px}
+@media (prefers-reduced-motion:no-preference){.lead{transition:border-color .15s ease}}
+</style>
+<style>
+/* base reset (the hosted version gets this from its platform) */
+html{-webkit-text-size-adjust:100%}
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <h1 id="bartitle">Fair Day Lead Log</h1>
+    <div class="tallies" id="tallies">
+      <div class="tally"><b id="t-total">0</b><span>Leads</span></div>
+      <div class="tally"><b id="t-booked">0</b><span>Booked</span></div>
+      <div class="tally"><b id="t-dep">0</b><span>Deposits</span></div>
+      <div class="tally"><b id="t-todo">0</b><span>To chase</span></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" data-mode="staff" aria-pressed="true">Staff</button>
+      <button type="button" class="tab" data-mode="client" aria-pressed="false">Client</button>
+    </div>
+    <div class="deadline" id="deadline"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card entry">
+    <h2>Add a couple</h2>
+    <p class="hint">Names are the only thing you need to start. Everything else can be filled in later.</p>
+    <form id="form">
+      <fieldset>
+        <div class="sub"><h3>Client details</h3><span class="rule"></span><em>what the couple fills in</em></div>
+        <div class="grid">
+          <label class="f"><span>Names</span><input id="f-names" required autocomplete="off" placeholder="Ella &amp; Tom"></label>
+          <label class="f"><span>Phone or email</span><input id="f-contact" autocomplete="off" placeholder="0400 000 000"></label>
+          <label class="f"><span>Wedding date</span><input id="f-date" type="date"></label>
+          <label class="f"><span>Venue or town</span><input id="f-venue" autocomplete="off" placeholder="Not sure yet"></label>
+          <label class="f"><span>Guests</span><input id="f-guests" type="number" min="0" inputmode="numeric" placeholder="120"></label>
+          <label class="f"><span>Budget</span><input id="f-budget" autocomplete="off" placeholder="$30k-ish"></label>
+          <label class="f"><span>Package talked about</span><select id="f-service">
+            <option value="">—</option>
+            <option>Month-of Coordination</option>
+            <option>Partial Planning</option>
+            <option>Full Planning</option>
+            <option>Undecided</option>
+          </select></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <div class="sub"><h3>Staff only</h3><span class="rule"></span><em>never shown to the couple</em></div>
+        <div class="grid">
+          <label class="f"><span>Source</span><select id="f-source">
+            <option>Stall chat</option>
+            <option>iPad</option>
+            <option>Table QR</option>
+            <option>Takehome</option>
+            <option>Other</option>
+          </select></label>
+          <label class="f"><span>Where they're at</span><select id="f-status">
+            <option value="deciding">Deciding</option>
+            <option value="booked">Booked</option>
+            <option value="browsing">Browsing</option>
+          </select></label>
+          <label class="f wide"><span>Notes</span><textarea id="f-notes" placeholder="Barn at Nundle, mum is the decision maker, wants help with the run sheet. Liked the binder."></textarea></label>
+        </div>
+      </fieldset>
+      <div class="actions">
+        <button type="submit" class="primary">Add to log</button>
+        <span class="saved" id="saved" hidden>Added</span>
+      </div>
+    </form>
+    <div class="warn" id="localwarn" hidden>This browser is blocking saved data (private browsing, or site data turned off), so entries will disappear if the page reloads. Export a CSV before you close the tab.</div>
+  </section>
+
+  <div class="bar">
+    <button class="chip" data-filter="all" aria-pressed="true">All</button>
+    <button class="chip" data-filter="booked" aria-pressed="false">Booked</button>
+    <button class="chip" data-filter="deciding" aria-pressed="false">Deciding</button>
+    <button class="chip" data-filter="chase" aria-pressed="false">To chase</button>
+    <span class="spacer"></span>
+    <button class="chip" id="export">Export CSV</button>
+  </div>
+
+  <div class="leads" id="leads"></div>
+
+  <div class="foot">
+    <span>Fair rate, add-ons, deposit and prize draw entry all close 11:59pm Mon 2 Nov. Deposit: Month-of $100 · Partial $150 · Full $150.</span>
+  </div>
+</div>
+
+<section id="kiosk" hidden>
+  <div class="kwrap">
+    <div id="kform-wrap">
+      <p class="keyebrow">The Kept Aisle</p>
+      <div class="khead">
+        <h2>Tell us about your day</h2>
+        <p class="khint">Pop in whatever you know so far. Nothing has to be locked in — your names and a way to reach you is plenty.</p>
+      </div>
+      <form id="kform" class="card">
+        <div class="grid">
+          <label class="f"><span>Your names</span><input id="k-names" required autocomplete="off" placeholder="Ella &amp; Tom"></label>
+          <label class="f"><span>Phone or email</span><input id="k-contact" autocomplete="off" placeholder="0400 000 000"></label>
+          <label class="f"><span>Wedding date</span><input id="k-date" type="date"></label>
+          <label class="f"><span>Venue or town</span><input id="k-venue" autocomplete="off" placeholder="Not sure yet"></label>
+          <label class="f"><span>Guests</span><input id="k-guests" type="number" min="0" inputmode="numeric" placeholder="120"></label>
+          <label class="f"><span>Budget</span><input id="k-budget" autocomplete="off" placeholder="Still working it out"></label>
+          <label class="f wide"><span>What you're after</span><select id="k-service">
+            <option value="">Not sure yet</option>
+            <option>Month-of Coordination</option>
+            <option>Partial Planning</option>
+            <option>Full Planning</option>
+          </select></label>
+        </div>
+        <button type="submit" class="primary kbig">Send to Kara</button>
+      </form>
+    </div>
+    <div class="kthanks" id="kthanks" hidden>
+      <p class="keyebrow">The Kept Aisle</p>
+      <h2>Thank you</h2>
+      <p>Kara has your details and will be in touch. Enjoy the rest of the fair.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var rows = [], filter = "all";
+  var E = function(id){ return document.getElementById(id); };
+
+  // ---- deadline line
+  var DEADLINE = new Date("2026-11-02T23:59:00+11:00");
+  function deadlineText(){
+    var now = new Date();
+    var ms = DEADLINE - now;
+    if(ms <= 0) return "Fair rate closed 11:59pm Mon 2 Nov. Prize draw 12pm Tue 3 Nov.";
+    var h = Math.floor(ms/3600000), d = Math.floor(h/24);
+    var left = d >= 1 ? (d + (d===1?" day ":" days ") + (h%24) + "h") : (h + "h " + Math.floor((ms%3600000)/60000) + "m");
+    return "Fair rate closes 11:59pm Mon 2 Nov — " + left + " left. Prize draw 12pm Tue 3 Nov.";
+  }
+  function tickDeadline(){ E("deadline").innerHTML = deadlineText().replace(/—\s(.+?)\sleft/, "— <b>$1</b> left"); }
+  tickDeadline(); setInterval(tickDeadline, 60000);
+
+  // ---- local fallback
+  function loadLocal(){
+    try{ return JSON.parse(localStorage.getItem("twf-leads") || "[]"); }catch(e){ return []; }
+  }
+  function saveLocal(){
+    try{ localStorage.setItem("twf-leads", JSON.stringify(rows)); }catch(e){}
+  }
+
+  function newId(){
+    return "l" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  }
+
+  // ---- store (this build keeps the log in the browser's own storage)
+  function storageOk(){
+    try{ localStorage.setItem("twf-test","1"); localStorage.removeItem("twf-test"); return true; }
+    catch(e){ return false; }
+  }
+  function start(){
+    if(!storageOk()){ E("localwarn").hidden = false; }
+    rows = loadLocal();
+    render();
+  }
+
+  function put(row){
+    var i = rows.map(function(r){ return r.id; }).indexOf(row.id);
+    if(i === -1){ rows.unshift(row); } else { rows[i] = row; }
+    saveLocal();
+  }
+  function removeRow(id){
+    rows = rows.filter(function(r){ return r.id !== id; });
+    saveLocal();
+    render();
+  }
+
+  // ---- add
+  E("form").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var names = E("f-names").value.trim();
+    if(!names) return;
+    var row = {
+      id: newId(),
+      names: names,
+      contact: E("f-contact").value.trim(),
+      weddingDate: E("f-date").value,
+      venue: E("f-venue").value.trim(),
+      service: E("f-service").value,
+      source: E("f-source").value,
+      guests: E("f-guests").value,
+      budget: E("f-budget").value.trim(),
+      notes: E("f-notes").value.trim(),
+      status: E("f-status").value || "deciding",
+      deposit: false,
+      followedUp: false,
+      createdAt: new Date().toISOString()
+    };
+    put(row);
+    E("form").reset();
+    E("f-names").focus();
+    var s = E("saved"); s.hidden = false; setTimeout(function(){ s.hidden = true; }, 1800);
+    render();
+  });
+
+  // ---- filters
+  Array.prototype.forEach.call(document.querySelectorAll(".chip[data-filter]"), function(b){
+    b.addEventListener("click", function(){
+      filter = b.getAttribute("data-filter");
+      Array.prototype.forEach.call(document.querySelectorAll(".chip[data-filter]"), function(o){
+        o.setAttribute("aria-pressed", o === b ? "true" : "false");
+      });
+      render();
+    });
+  });
+
+  function visible(){
+    return rows.filter(function(r){
+      if(filter === "booked") return r.status === "booked";
+      if(filter === "deciding") return r.status === "deciding";
+      if(filter === "chase") return r.status !== "booked" && !r.followedUp;
+      return true;
+    });
+  }
+
+  // ---- render
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+    });
+  }
+  function prettyDate(iso){
+    if(!iso) return "";
+    var p = iso.split("-");
+    if(p.length !== 3) return iso;
+    var m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return Number(p[2]) + " " + (m[Number(p[1])-1] || "") + " " + p[0];
+  }
+
+  function render(){
+    var booked = rows.filter(function(r){ return r.status === "booked"; });
+    E("t-total").textContent = rows.length;
+    E("t-booked").textContent = booked.length;
+    E("t-dep").textContent = rows.filter(function(r){ return r.deposit; }).length;
+    E("t-todo").textContent = rows.filter(function(r){ return r.status !== "booked" && !r.followedUp; }).length;
+
+    var host = E("leads");
+    var list = visible();
+    if(!rows.length){
+      host.innerHTML = '<div class="empty"><h3>Nothing logged yet</h3>' +
+        '<p>Add the first couple above as soon as you talk to them — names and a phone number are enough, and you can fill in the rest between conversations.</p></div>';
+      return;
+    }
+    if(!list.length){
+      host.innerHTML = '<div class="empty"><h3>Nothing in this view</h3><p>No couples match that filter yet. Tap All to see the whole log.</p></div>';
+      return;
+    }
+    host.innerHTML = list.map(function(r){
+      var meta = [];
+      if(r.weddingDate) meta.push("Wedding <b>" + esc(prettyDate(r.weddingDate)) + "</b>");
+      if(r.venue) meta.push("Venue <b>" + esc(r.venue) + "</b>");
+      if(r.guests) meta.push("Guests <b>" + esc(r.guests) + "</b>");
+      if(r.budget) meta.push("Budget <b>" + esc(r.budget) + "</b>");
+      if(r.service) meta.push("Package <b>" + esc(r.service) + "</b>");
+      var statusLabel = r.status === "booked" ? "Booked" : (r.status === "browsing" ? "Browsing" : "Deciding");
+      return '<article class="lead s-' + esc(r.status || "deciding") + '" data-id="' + esc(r.id) + '">' +
+        '<div class="head"><h3>' + esc(r.names) + '</h3>' +
+        '<span class="pill ' + esc(r.status || "deciding") + '">' + statusLabel + '</span></div>' +
+        (meta.length ? '<p class="meta">' + meta.map(function(m){ return "<span>" + m + "</span>"; }).join("") + '</p>' : '') +
+        (r.contact ? '<p class="contact">' + esc(r.contact) + '</p>' : '') +
+        '<div class="mine">' +
+          '<div class="sub"><h3>Staff only</h3><span class="rule"></span><em>' + esc(r.source || "no source") + '</em></div>' +
+          '<label class="f note"><span>Notes</span><textarea data-field="notes">' + esc(r.notes) + '</textarea></label>' +
+          '<div class="row">' +
+            '<div class="seg">' +
+              '<button data-status="booked" aria-pressed="' + (r.status === "booked") + '">Booked</button>' +
+              '<button data-status="deciding" aria-pressed="' + (r.status === "deciding") + '">Deciding</button>' +
+              '<button data-status="browsing" aria-pressed="' + (r.status === "browsing") + '">Browsing</button>' +
+            '</div>' +
+            '<button class="tick" data-tick="deposit" aria-pressed="' + !!r.deposit + '">Deposit paid</button>' +
+            '<button class="tick" data-tick="followedUp" aria-pressed="' + !!r.followedUp + '">Followed up</button>' +
+          '</div>' +
+          '<div class="row">' +
+            '<label class="f"><span>Source</span><select data-field="source">' +
+              ["Stall chat","iPad","Table QR","Takehome","Other"].map(function(s){
+                return '<option' + (r.source === s ? " selected" : "") + '>' + s + '</option>';
+              }).join("") +
+            '</select></label>' +
+            '<button class="link" data-del="1">Delete</button>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join("");
+  }
+
+  function find(id){
+    for(var i=0;i<rows.length;i++){ if(rows[i].id === id) return rows[i]; }
+    return null;
+  }
+
+  E("leads").addEventListener("click", function(ev){
+    var card = ev.target.closest ? ev.target.closest(".lead") : null;
+    if(!card) return;
+    var row = find(card.getAttribute("data-id"));
+    if(!row) return;
+    var t = ev.target;
+    if(t.hasAttribute("data-status")){
+      row.status = t.getAttribute("data-status");
+      put(row); render(); return;
+    }
+    if(t.hasAttribute("data-tick")){
+      var f = t.getAttribute("data-tick");
+      row[f] = !row[f];
+      put(row); render(); return;
+    }
+    if(t.hasAttribute("data-del")){
+      if(t.getAttribute("data-armed") === "1"){ removeRow(row.id); }
+      else { t.setAttribute("data-armed","1"); t.textContent = "Tap again to delete"; }
+    }
+  });
+
+  E("leads").addEventListener("change", function(ev){
+    var t = ev.target;
+    if(!t.hasAttribute || !t.hasAttribute("data-field")) return;
+    var card = t.closest(".lead");
+    var row = find(card.getAttribute("data-id"));
+    if(!row) return;
+    var field = t.getAttribute("data-field");
+    if(row[field] === t.value) return;
+    row[field] = t.value;
+    put(row);
+  });
+
+  // ---- CSV
+  function csv(){
+    var cols = ["names","contact","weddingDate","venue","service","source","status","deposit","followedUp","guests","budget","notes","createdAt"];
+    var head = ["Names","Contact","Wedding date","Venue","Package","Source","Status","Deposit paid","Followed up","Guests","Budget","Notes","Logged at"];
+    var cell = function(v){
+      if(v === true) return "yes";
+      if(v === false || v == null) return "";
+      return '"' + String(v).replace(/"/g,'""') + '"';
+    };
+    return head.join(",") + "\n" + rows.map(function(r){
+      return cols.map(function(c){ return cell(r[c]); }).join(",");
+    }).join("\n");
+  }
+  E("export").addEventListener("click", function(){
+    if(!rows.length) return;
+    var blob = new Blob(["\ufeff" + csv()], {type:"text/csv;charset=utf-8"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "tka-fair-leads.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  // ---- couple view (hand the device over)
+  function addRow(row){
+    put(row);
+    render();
+  }
+  var main = document.querySelector(".wrap"), kiosk = E("kiosk");
+  function setMode(mode){
+    var client = mode === "client";
+    main.hidden = client;
+    kiosk.hidden = !client;
+    E("tallies").hidden = client;
+    E("deadline").hidden = client;
+    E("bartitle").textContent = client ? "The Kept Aisle" : "Fair Day Lead Log";
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(t){
+      t.setAttribute("aria-pressed", t.getAttribute("data-mode") === mode ? "true" : "false");
+    });
+    E("kform-wrap").hidden = false;
+    E("kthanks").hidden = true;
+    if(client){
+      try{ E("kform").reset(); }catch(e){}
+      window.scrollTo(0,0);
+      setTimeout(function(){ try{ E("k-names").focus(); }catch(e){} }, 60);
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(b){
+    b.addEventListener("click", function(){ setMode(b.getAttribute("data-mode")); });
+  });
+
+  E("kform").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var names = E("k-names").value.trim();
+    if(!names) return;
+    addRow({
+      id: newId(),
+      names: names,
+      contact: E("k-contact").value.trim(),
+      weddingDate: E("k-date").value,
+      venue: E("k-venue").value.trim(),
+      service: E("k-service").value,
+      source: "iPad",
+      guests: E("k-guests").value,
+      budget: E("k-budget").value.trim(),
+      notes: "",
+      status: "deciding",
+      deposit: false,
+      followedUp: false,
+      createdAt: new Date().toISOString()
+    });
+    E("kform-wrap").hidden = true;
+    E("kthanks").hidden = false;
+    window.scrollTo(0,0);
+    setTimeout(function(){
+      try{ E("kform").reset(); }catch(e){}
+      E("kthanks").hidden = true;
+      E("kform-wrap").hidden = false;
+    }, 4500);
+  });
+
+  start();
+})();
+</script>
+</body>
+</html>
