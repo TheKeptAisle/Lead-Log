@@ -137,7 +137,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 .pill.src{background:transparent;border:1px solid var(--line);color:var(--ink-soft);font-weight:600}
 .meta{display:flex;flex-wrap:wrap;gap:4px 16px;margin:9px 0 0;font-size:13.5px;color:var(--ink-soft)}
 .meta b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
-.contact{font-size:14px;margin-top:6px;word-break:break-word}
+.contact{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:14px;margin-top:6px;word-break:break-word}
 .note{margin-top:10px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
 .row label.f{flex:0 1 190px}
@@ -206,19 +206,20 @@ img{max-width:100%}
 <div class="wrap">
   <section class="card entry">
     <h2>Add a couple</h2>
-    <p class="hint">Names are the only thing you need to start. Everything else can be filled in later.</p>
+    <p class="hint">Names, phone, email and the package are needed. The rest can be filled in between conversations.</p>
     <form id="form">
       <fieldset>
         <div class="sub"><h3>Client details</h3><span class="rule"></span><em>what the couple fills in</em></div>
         <div class="grid">
-          <label class="f"><span>Names</span><input id="f-names" required autocomplete="off" placeholder="Ella &amp; Tom"></label>
-          <label class="f"><span>Phone or email</span><input id="f-contact" autocomplete="off" placeholder="0400 000 000"></label>
+          <label class="f"><span>Names *</span><input id="f-names" required autocomplete="off" placeholder="Ella &amp; Tom"></label>
+          <label class="f"><span>Phone *</span><input id="f-phone" type="tel" required autocomplete="off" placeholder="0400 000 000"></label>
+          <label class="f"><span>Email *</span><input id="f-email" type="email" required autocomplete="off" placeholder="ella@example.com"></label>
           <label class="f"><span>Wedding date</span><input id="f-date" type="date"></label>
           <label class="f"><span>Venue or town</span><input id="f-venue" autocomplete="off" placeholder="Not sure yet"></label>
           <label class="f"><span>Guests</span><input id="f-guests" type="number" min="0" inputmode="numeric" placeholder="120"></label>
           <label class="f"><span>Budget</span><input id="f-budget" autocomplete="off" placeholder="$30k-ish"></label>
-          <label class="f"><span>Package talked about</span><select id="f-service">
-            <option value="">—</option>
+          <label class="f"><span>Package talked about *</span><select id="f-service" required>
+            <option value="" disabled selected>Choose one</option>
             <option>Month-of Coordination</option>
             <option>Partial Planning</option>
             <option>Full Planning</option>
@@ -274,21 +275,23 @@ img{max-width:100%}
       <p class="keyebrow">The Kept Aisle</p>
       <div class="khead">
         <h2>Tell us about your day</h2>
-        <p class="khint">Pop in whatever you know so far. Nothing has to be locked in — your names and a way to reach you is plenty.</p>
+        <p class="khint">The starred ones we need so we can get back to you. Everything else, pop in whatever you know so far — nothing has to be locked in.</p>
       </div>
       <form id="kform" class="card">
         <div class="grid">
-          <label class="f"><span>Your names</span><input id="k-names" required autocomplete="off" placeholder="Ella &amp; Tom"></label>
-          <label class="f"><span>Phone or email</span><input id="k-contact" autocomplete="off" placeholder="0400 000 000"></label>
+          <label class="f"><span>Your names *</span><input id="k-names" required autocomplete="off" placeholder="Ella &amp; Tom"></label>
+          <label class="f"><span>Phone *</span><input id="k-phone" type="tel" required autocomplete="off" placeholder="0400 000 000"></label>
+          <label class="f"><span>Email *</span><input id="k-email" type="email" required autocomplete="off" placeholder="ella@example.com"></label>
           <label class="f"><span>Wedding date</span><input id="k-date" type="date"></label>
           <label class="f"><span>Venue or town</span><input id="k-venue" autocomplete="off" placeholder="Not sure yet"></label>
           <label class="f"><span>Guests</span><input id="k-guests" type="number" min="0" inputmode="numeric" placeholder="120"></label>
           <label class="f"><span>Budget</span><input id="k-budget" autocomplete="off" placeholder="Still working it out"></label>
-          <label class="f wide"><span>What you're after</span><select id="k-service">
-            <option value="">Not sure yet</option>
+          <label class="f wide"><span>What you're after *</span><select id="k-service" required>
+            <option value="" disabled selected>Choose one</option>
             <option>Month-of Coordination</option>
             <option>Partial Planning</option>
             <option>Full Planning</option>
+            <option>Not sure yet</option>
           </select></label>
         </div>
         <button type="submit" class="primary kbig">Send to Kara</button>
@@ -362,7 +365,8 @@ img{max-width:100%}
     var row = {
       id: newId(),
       names: names,
-      contact: E("f-contact").value.trim(),
+      phone: E("f-phone").value.trim(),
+      email: E("f-email").value.trim(),
       weddingDate: E("f-date").value,
       venue: E("f-venue").value.trim(),
       service: E("f-service").value,
@@ -446,7 +450,13 @@ img{max-width:100%}
         '<div class="head"><h3>' + esc(r.names) + '</h3>' +
         '<span class="pill ' + esc(r.status || "deciding") + '">' + statusLabel + '</span></div>' +
         (meta.length ? '<p class="meta">' + meta.map(function(m){ return "<span>" + m + "</span>"; }).join("") + '</p>' : '') +
-        (r.contact ? '<p class="contact">' + esc(r.contact) + '</p>' : '') +
+        (function(){
+          var c = [];
+          if(r.phone) c.push('<span>' + esc(r.phone) + '</span>');
+          if(r.email) c.push('<span>' + esc(r.email) + '</span>');
+          if(!c.length && r.contact) c.push('<span>' + esc(r.contact) + '</span>');
+          return c.length ? '<p class="contact">' + c.join("") + '</p>' : '';
+        })() +
         '<div class="mine">' +
           '<div class="sub"><h3>Staff only</h3><span class="rule"></span><em>' + esc(r.source || "no source") + '</em></div>' +
           '<label class="f note"><span>Notes</span><textarea data-field="notes">' + esc(r.notes) + '</textarea></label>' +
@@ -512,8 +522,8 @@ img{max-width:100%}
 
   // ---- CSV
   function csv(){
-    var cols = ["names","contact","weddingDate","venue","service","source","status","deposit","followedUp","guests","budget","notes","createdAt"];
-    var head = ["Names","Contact","Wedding date","Venue","Package","Source","Status","Deposit paid","Followed up","Guests","Budget","Notes","Logged at"];
+    var cols = ["names","phone","email","weddingDate","venue","service","source","status","deposit","followedUp","guests","budget","notes","createdAt"];
+    var head = ["Names","Phone","Email","Wedding date","Venue","Package","Source","Status","Deposit paid","Followed up","Guests","Budget","Notes","Logged at"];
     var cell = function(v){
       if(v === true) return "yes";
       if(v === false || v == null) return "";
@@ -571,7 +581,8 @@ img{max-width:100%}
     addRow({
       id: newId(),
       names: names,
-      contact: E("k-contact").value.trim(),
+      phone: E("k-phone").value.trim(),
+      email: E("k-email").value.trim(),
       weddingDate: E("k-date").value,
       venue: E("k-venue").value.trim(),
       service: E("k-service").value,
